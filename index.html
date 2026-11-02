@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Khám Phá Bản Thân MXH</title>
+    <!-- Thư viện tạo mã QR tự động -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        /* Reset & Base */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, #1e0030, #0a001a); color: white; min-height: 100vh; display: flex; justify-content: center; align-items: center; overflow-x: hidden; }
+        #app { width: 100%; max-width: 500px; padding: 20px; text-align: center; }
+        
+        /* Glassmorphism */
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 30px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); }
+        
+        /* Buttons */
+        .btn { background: linear-gradient(45deg, #ff007a, #7a00ff); border: none; color: white; padding: 15px 30px; font-size: 1.2rem; font-weight: bold; border-radius: 50px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; width: 100%; margin-bottom: 15px; }
+        .btn:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(255, 0, 122, 0.5); }
+        .btn-outline { background: transparent; border: 2px solid #7a00ff; }
+        
+        /* Loading Bar */
+        .loading-container { width: 100%; height: 20px; background: rgba(255,255,255,0.1); border-radius: 10px; margin: 20px 0; overflow: hidden; }
+        .loading-bar { height: 100%; width: 0%; background: linear-gradient(90deg, #00f2fe, #4facfe); transition: width 0.1s linear; }
+        .loading-text { font-style: italic; color: #aaa; margin-top: 10px; min-height: 24px; font-size: 1.1rem; }
+        
+        /* Result */
+        .emoji { font-size: 5rem; margin-bottom: 10px; animation: pop 0.5s ease-out; }
+        .title { font-size: 2rem; font-weight: bold; margin-bottom: 15px; color: #00f2fe; text-transform: uppercase; line-height: 1.2; }
+        .desc { font-size: 1.2rem; line-height: 1.5; color: #e0e0e0; font-style: italic; }
+        
+        /* QR Code */
+        #qrcode { display: flex; justify-content: center; margin: 20px 0; background: white; padding: 20px; border-radius: 10px; }
+        h1 { margin-bottom: 20px; font-size: 1.8rem; }
+        
+        @keyframes pop {
+            0% { transform: scale(0); }
+            80% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="glass"></div>
+
+    <script>
+        // Dữ liệu 30 nhân cách mạng xã hội kèm phân tích sâu cay
+        const personas = [
+            { emoji: "🐸", title: "Chúa tể lướt feed", desc: "Lướt không mệt mỏi, ngón tay cái có cơ bắp cuồn cuộn nhưng hiếm khi để lại dấu vết." },
+            { emoji: "👀", title: "Thánh hóng drama", desc: "Tốc độ có mặt tại các vụ bóc phốt còn nhanh hơn cả tốc độ ánh sáng." },
+            { emoji: "❤️", title: "Máy phát tim di động", desc: "Dành cả thanh xuân để thả tim dạo, ai đăng gì cũng tim bất chấp." },
+            { emoji: "🕵️", title: "Đặc vụ online", desc: "Năng lực điều tra siêu phàm, tìm ra info qua một bức ảnh bóng lưng trong 3 nốt nhạc." },
+            { emoji: "📱", title: "Nạn nhân thuật toán", desc: "Định vào xem 5 phút thôi nhưng ngẩng đầu lên thì đã 3 giờ sáng." },
+            { emoji: "🎬", title: "Đạo diễn content", desc: "Nghĩ ra hàng tỷ kịch bản triệu view trong đầu nhưng không bao giờ quay clip." },
+            { emoji: "🫥", title: "Bóng ma thả tim", desc: "Xem story trong âm thầm, thoắt ẩn thoắt hiện, tuyệt đối không bao giờ comment." },
+            { emoji: "🚀", title: "Chiến thần bắt trend", desc: "Trend nào mới ra 5 phút là đã bắt kịp, cuốn từ điển sống của cõi mạng." },
+            { emoji: "💬", title: "Tổng đài bình luận", desc: "Nơi nào có comment, nơi đó có mặt bạn với những câu châm biếm chí mạng." },
+            { emoji: "🔋", title: "Pin 1% vẫn cố", desc: "Điện thoại báo đỏ nhưng tinh thần cày view vẫn cháy rực rỡ không tắt." },
+            { emoji: "🛍️", title: "Chốt đơn vô thức", desc: "Xem livestream giải trí lúc nửa đêm nhưng sáng hôm sau ví tiền báo động đỏ." },
+            { emoji: "🎧", title: "Nạn nhân âm thanh viral", desc: "Ám ảnh giai điệu TikTok đến mức đi tắm cũng lẩm nhẩm hát theo." },
+            { emoji: "📸", title: "Nhiếp ảnh gia ẩn danh", desc: "Chụp 100 tấm ảnh, qua 7749 app chỉnh sửa 3 tiếng nhưng cuối cùng không đăng tấm nào." },
+            { emoji: "🧠", title: "Bách khoa toàn thư", desc: "Đọc comment thấy giải trí hơn cả xem video, thuộc lòng mọi câu đùa kinh điển." },
+            { emoji: "🧟", title: "Cú đêm online", desc: "Hoạt động năng suất nhất vào khung giờ âm binh, sáng ra đi học/đi làm như zombie." },
+            { emoji: "🫡", title: "Người dùng hệ tâm linh", desc: "Chuyên chia sẻ thông điệp vũ trụ, bói bài tarot và check cung hoàng đạo mỗi ngày." },
+            { emoji: "🧹", title: "Chiến binh dọn follow", desc: "Định kỳ hàng tháng thanh lọc danh sách bạn bè như dọn nhà đón Tết." },
+            { emoji: "🗣️", title: "Chuyên gia gửi meme", desc: "Giao tiếp 100% bằng hình ảnh meme, từ chối sử dụng ngôn ngữ loài người." },
+            { emoji: "🎭", title: "Diễn viên hai cuộc đời", desc: "Nick chính thì đạo lý nghiêm túc, nick clone thì quậy đục nước cõi mạng." },
+            { emoji: "🧊", title: "Hệ điều hành lạnh lùng", desc: "Tin nhắn dài 3 trang A4 gửi đến cũng chỉ 'Seen' hoặc rep đúng một chữ 'Ok'." },
+            { emoji: "📢", title: "Đại sứ chia sẻ", desc: "Gặp bài gì cũng share về tường nhà, dù chính mình cũng chẳng bao giờ đọc lại." },
+            { emoji: "🤳", title: "Influencer tưởng tượng", desc: "Check-in sang chảnh, chụp ảnh mờ ảo nghệ thuật nhưng follower toàn là người quen." },
+            { emoji: "🧩", title: "Thánh đọc vị thuật toán", desc: "Biết cách lách luật, luôn tính toán giờ vàng đăng bài để được lên xu hướng." },
+            { emoji: "🙈", title: "Lướt trong lén lút", desc: "Ở ngoài giả vờ không quan tâm nhưng tối về lập nick ảo để stalk người ta." },
+            { emoji: "🧃", title: "Nghiện nội dung chữa lành", desc: "Chuyên xem video nặn mụn, cắt cỏ, rửa sân để tìm kiếm sự bình yên trong tâm hồn." },
+            { emoji: "🧑‍💻", title: "Admin bất đắc dĩ", desc: "Lập group chat rồi tự mình độc thoại mỗi ngày vì không ai thèm rep." },
+            { emoji: "🧭", title: "Kẻ lang thang đa nền tảng", desc: "Nhảy từ Facebook sang TikTok, qua Threads rồi về Insta lặp lại mỗi 5 phút." },
+            { emoji: "🪄", title: "Phù thủy filter", desc: "Không bao giờ dùng cam thường, luôn phải có màng lọc gánh còng lưng nhan sắc." },
+            { emoji: "📚", title: "Sinh viên học từ Reels", desc: "Toàn bộ kiến thức xã hội đều được dung nạp qua các video ngắn 15 giây." },
+            { emoji: "🌱", title: "Người dùng có ý thức", desc: "Mở app đúng 30 phút rồi đóng, sinh vật hiếm hoi chưa bị nền tảng tha hóa." }
+        ];
+
+        // Thông điệp thao túng tâm lý lúc loading
+        const loadingMessages = [
+            "Đang quét lịch sử duyệt web...",
+            "Đang khôi phục tin nhắn đã thu hồi...",
+            "Đang tính toán nghiệp tụ vành môi...",
+            "Đang kiểm tra danh sách người yêu cũ...",
+            "Đang phân tích thời lượng cầm điện thoại...",
+            "Sắp xong rồi, đừng chột dạ nhé..."
+        ];
+
+        const appDiv = document.getElementById('app');
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // Nhận diện nếu tham số URL có chứa ?role=audience thì tự động chuyển vào màn hình chơi
+        const isAudience = urlParams.get('role') === 'audience';
+
+        function init() {
+            if (isAudience) {
+                renderAudienceStart();
+            } else {
+                renderHome();
+            }
+        }
+
+        // Màn hình chọn ban đầu
+        function renderHome() {
+            appDiv.innerHTML = `
+                <h1 style="color: #00f2fe">TRẮC NGHIỆM ĐỊNH DANH MXH</h1>
+                <p style="margin-bottom: 25px; color: #ccc;">Chọn chế độ hiển thị</p>
+                <button class="btn" onclick="renderPresenter()">Màn Hình Chiếu (Tạo QR)</button>
+                <button class="btn btn-outline" onclick="renderAudienceStart()">Chơi Luôn Trên Máy Này</button>
+            `;
+        }
+
+        // Màn hình dành cho máy chiếu (Tạo QR code động)
+        function renderPresenter() {
+            appDiv.innerHTML = `
+                <h1 style="color: #00f2fe">QUÉT MÃ ĐỂ THAM GIA</h1>
+                <p>Khán giả hãy dùng điện thoại quét mã này để nhận bản án!</p>
+                <div id="qrcode"></div>
+                <button class="btn btn-outline" style="margin-top: 10px" onclick="renderHome()">Quay Lại</button>
+            `;
+            
+            // Lấy URL hiện tại (dù là file offline hay host online) và nối thêm ?role=audience
+            const currentUrl = window.location.href.split('?')[0];
+            const audienceUrl = currentUrl + "?role=audience";
+            
+            new QRCode(document.getElementById("qrcode"), {
+                text: audienceUrl,
+                width: 250,
+                height: 250,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+        }
+
+        // Màn hình khán giả khi vừa quét mã xong
+        function renderAudienceStart() {
+            appDiv.innerHTML = `
+                <h1 style="font-size: 2.5rem; margin-bottom: 20px; color: #ff007a;">BẠN LÀ AI?</h1>
+                <p style="margin-bottom: 40px; font-size: 1.1rem; color: #ccc;">Sự thật về cách bạn dùng mạng xã hội sắp bị bóc trần...</p>
+                <button class="btn" onclick="startLoading()" style="padding: 20px; font-size: 1.5rem; box-shadow: 0 0 20px rgba(122, 0, 255, 0.5);">BẤM ĐỂ KHÁM PHÁ</button>
+            `;
+        }
+
+        // Hiệu ứng Loading thao túng tâm lý
+        function startLoading() {
+            appDiv.innerHTML = `
+                <h1 style="color: #00f2fe; font-size: 1.5rem;">ĐANG TRÍCH XUẤT DỮ LIỆU...</h1>
+                <div class="loading-container">
+                    <div class="loading-bar" id="loadBar"></div>
+                </div>
+                <div class="loading-text" id="loadText">Đang khởi động thuật toán...</div>
+            `;
+
+            const loadBar = document.getElementById('loadBar');
+            const loadText = document.getElementById('loadText');
+            
+            let progress = 0;
+            let messageIndex = 0;
+            
+            // Đổi text mỗi 600ms
+            const textInterval = setInterval(() => {
+                if (messageIndex < loadingMessages.length) {
+                    loadText.innerText = loadingMessages[messageIndex];
+                    messageIndex++;
+                }
+            }, 600);
+
+            // Chạy thanh loading mượt mà trong 3.5 giây
+            const barInterval = setInterval(() => {
+                progress += 1; 
+                loadBar.style.width = progress + '%';
+                
+                if (progress >= 100) {
+                    clearInterval(textInterval);
+                    clearInterval(barInterval);
+                    setTimeout(showResult, 300); // Dừng lại 1 nhịp ở 100% trước khi ra kết quả
+                }
+            }, 35); 
+        }
+
+        // Hiển thị kết quả ngẫu nhiên
+        function showResult() {
+            const randomPersona = personas[Math.floor(Math.random() * personas.length)];
+            
+            appDiv.innerHTML = `
+                <div class="emoji">${randomPersona.emoji}</div>
+                <div class="title">${randomPersona.title}</div>
+                <div class="desc">"${randomPersona.desc}"</div>
+                <button class="btn btn-outline" style="margin-top: 40px;" onclick="renderAudienceStart()">Thử Lại Trót Lọt Nữa Không?</button>
+            `;
+        }
+
+        // Khởi chạy hệ thống
+        init();
+    </script>
+</body>
+</html>
